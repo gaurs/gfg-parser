@@ -1,0 +1,51 @@
+#Target Folder#
+/target/
+
+#Any Class File#
+*.class
+
+#Log File#
+*.log
+
+#MacBook Files#
+.DS_Store
+.DS_Store?
+Thumbs.db
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+# Eclipse Core
+.project
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+.settings/
+.loadpath
+
+# Locally stored "Eclipse launch configurations"
+*.launch
+
+# JDT-specific (Eclipse Java Development Tools)
+.classpath
+
+# sbteclipse plugin
+.target
+
+# STS (Spring Tool Suite)
+.springBeans
+
+# Code Recommenders
+.recommenders/
+
+#Maven Files#
+.mvn
+mvnw
+mvnw.cmd
+
