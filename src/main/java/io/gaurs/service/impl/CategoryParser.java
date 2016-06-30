@@ -3,7 +3,9 @@ package io.gaurs.service.impl;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import io.gaurs.service.ParsingService;
+import io.gaurs.service.VisitedUrlService;
 
 @Service
 public class CategoryParser implements ParsingService {
@@ -25,6 +28,9 @@ public class CategoryParser implements ParsingService {
 
 	@Autowired
 	private PageParser pageParser;
+
+	@Autowired
+	private VisitedUrlService visitedUrlService;
 
 	private static final Logger logger = Logger.getLogger(CategoryParser.class);
 
@@ -49,11 +55,20 @@ public class CategoryParser implements ParsingService {
 
 		List<File> allPagesInThisCategory = new ArrayList<File>();
 
+		// links visited last time; won't be adding these this time to file/db
+		Set<String> existingUrlCache = visitedUrlService.getUrlList();
+		Set<String> newUrlCache = new HashSet<>();
+
 		try {
 
 			do {
 
-				// Checking the first page
+				// if the variable isPathReset is set; we need to again connect
+				// to the page to fetch all the urls on it.
+				// The same is applicable when all the links on current page are
+				// processed and we are connecting to new page
+				// In such cases, repositoryPath is updated to next page url as
+				// set in the code below
 				if (isPathReset) {
 					category = Jsoup.connect(repositoryPath).get();
 				}
@@ -70,13 +85,18 @@ public class CategoryParser implements ParsingService {
 					logger.info("Parsing : " + url);
 
 					// Connect to page
-					Document page = Jsoup.connect(url).get();
+					if (!existingUrlCache.contains(url) && !newUrlCache.contains(url)) {
+						newUrlCache.add(url);
+						Document page = Jsoup.connect(url).get();
 
-					// Parse the page
-					List<File> output = pageParser.beginParsing(page);
-					allPagesInThisCategory.addAll(output);
+						// Parse the page
+						List<File> output = pageParser.beginParsing(page);
+						allPagesInThisCategory.addAll(output);
 
-					Thread.sleep(2000);
+						// Wait sometime before fetching next page to avoid
+						// network traffic
+						Thread.sleep((long) (Math.random() * 1000));
+					}
 				}
 
 				// Fetch the next page
@@ -87,14 +107,17 @@ public class CategoryParser implements ParsingService {
 				if (null != nextPage) {
 					repositoryPath = nextPage.attr("href");
 					isPathReset = true;
-					Thread.sleep(2000);
-				}else{
-					//Completed the cycle
+				} else {
+					// Completed the cycle
 					break;
 				}
 
-
 			} while (!StringUtils.isEmpty(repositoryPath));
+
+			// write the url cache to file/db; if existing urlcache is empty so
+			// we need not to PRE - append the urls data with newline character
+			// (1st line) else we do
+			visitedUrlService.saveUrlList(newUrlCache, !existingUrlCache.isEmpty());
 
 		} catch (IOException exception) {
 			logger.error("Exception occurred while parsing page " + repositoryPath, exception);
