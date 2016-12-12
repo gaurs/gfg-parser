@@ -52,6 +52,9 @@ public class HtmlDocumentGeneratorServiceImpl implements DocGeneratorService {
 					
 					//Update the src to the downloaded image
 					image.attr("src", resourceName + "/images" + imageName);
+					
+					//The parent node is the a tag for the image to be linked to GFG
+					image.parentNode().attr("href", resourceName + "/images" + imageName);
 				}
 			}
 			

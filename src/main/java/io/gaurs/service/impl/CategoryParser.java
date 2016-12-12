@@ -7,6 +7,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.annotation.PostConstruct;
+
 import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -35,14 +37,15 @@ public class CategoryParser implements ParsingService {
 	private static final Logger logger = Logger.getLogger(CategoryParser.class);
 
 	@Override
+	@PostConstruct
 	public void beginParsing() {
 
 		// Connect to the repository
 		try {
 			Document category = Jsoup.connect(repositoryPath).get();
 			beginParsing(category);
-		} catch (IOException e) {
-			logger.error("Exception occurred while connecting to " + repositoryPath);
+		} catch (IOException exception) {
+			logger.error("Exception occurred while connecting to " + repositoryPath, exception);
 		}
 
 	}
