@@ -33,11 +33,13 @@ public class CategoryParser implements ParsingService {
 
 	@Autowired
 	private VisitedUrlService visitedUrlService;
+	
+	@Autowired
+	private IndexPageGeneratorServiceImpl indexPageGenerator;
 
 	private static final Logger logger = Logger.getLogger(CategoryParser.class);
 
 	@Override
-	@PostConstruct
 	public void beginParsing() {
 
 		// Connect to the repository
@@ -121,6 +123,8 @@ public class CategoryParser implements ParsingService {
 			// we need not to PRE - append the urls data with newline character
 			// (1st line) else we do
 			visitedUrlService.saveUrlList(newUrlCache, !existingUrlCache.isEmpty());
+			
+			indexPageGenerator.generateDocument();
 
 		} catch (IOException exception) {
 			logger.error("Exception occurred while parsing page " + repositoryPath, exception);

@@ -10,6 +10,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import io.gaurs.service.DocGeneratorService;
@@ -19,11 +20,12 @@ import io.gaurs.service.ParsingService;
 public class PageParser implements ParsingService {
 
 	@Autowired
+	@Qualifier("htmlDocGenerator")
 	private DocGeneratorService docGenerator;
 
 	private static final Logger logger = Logger.getLogger(PageParser.class);
 
-	private final String contributedBy = "This article is contributed by";
+	private final String contributedBy = "This article";
 	private final String comments = "Please write comments if you find anything incorrect";
 	private final String gate = "GATE CS Corner";
 	private final String cp = "Company Wise Coding Practice";
@@ -36,6 +38,7 @@ public class PageParser implements ParsingService {
 		// Remove unwanted elements
 		doc.select("script").remove();
 		doc.select("ins.adsbygoogle").remove();
+		doc.select("iframe").remove();
 
 		// Fetch the page title
 		Element pageTitle = doc.select("h1.entry-title").first();

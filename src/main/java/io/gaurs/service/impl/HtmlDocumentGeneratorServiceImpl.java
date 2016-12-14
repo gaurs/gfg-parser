@@ -19,76 +19,122 @@ import org.springframework.stereotype.Service;
 
 import io.gaurs.service.DocGeneratorService;
 
-@Service
+@Service("htmlDocGenerator")
 public class HtmlDocumentGeneratorServiceImpl implements DocGeneratorService {
-	
+
 	@Value("${output.dir}")
 	private String outputDir;
 
 	private static final Logger logger = Logger.getLogger(HtmlDocumentGeneratorServiceImpl.class);
 
 	@Override
-	public File generateDocument(Element pageTitle, Element pageContent) {
+	public File generateDocument(Element... elements) {
+
+		Element pageTitle = elements[0];
+		Element pageContent = elements[1];
 
 		File op = null;
 		try {
-			
-			//Replace All The Spaces
+
+			// Replace All The Spaces
 			String resourceName = pageTitle.text().replaceAll(" ", "_");
 			resourceName = resourceName.replaceAll("/", "_");
-			
-			//Download all the images in the pageContent Folder
+
+			// Download all the images in the pageContent Folder
 			Elements images = pageContent.getElementsByTag("img");
-			
-			if(!images.isEmpty()){
-				//Create the images folder
+
+			if (!images.isEmpty()) {
+				// Create the images folder
 				String imagesDir = outputDir + resourceName + "/images";
 				File dir = new File(imagesDir);
 				dir.mkdirs();
-				
-				for(Element image : images){
+
+				for (Element image : images) {
 					String imageUrl = image.absUrl("src");
 					String imageName = fetchImage(imageUrl, dir);
-					
-					//Update the src to the downloaded image
+
+					// Update the src to the downloaded image
 					image.attr("src", resourceName + "/images" + imageName);
-					
-					//The parent node is the a tag for the image to be linked to GFG
+					image.attr("class", "img-fluid");
+
+					// The parent node is the a tag for the image to be linked
+					// to GFG
 					image.parentNode().attr("href", resourceName + "/images" + imageName);
 				}
 			}
-			
-			
-			Document document = Jsoup.parse(""
-					+ "<html xmlns='http://www.w3.org/1999/xhtml'>"
-					+ "<head>"
-					+ "<meta charset='utf-8' />"
-					+ "<meta http-equiv='X-UA-Compatible' content='IE=edge' />"
-					+ "<meta name='viewport' content='width=device-width, initial-scale=1' />"
-					+ "<title>" + pageTitle.text() + "</title>"
-					+ "<script type='text/javascript' src='http://code.jquery.com/jquery.min.js'></script>"
-					+ "<script src='https://code.jquery.com/jquery-3.0.0.min.js'></script>"
-					+ "<script src='http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.js'></script>"
-					+ "<link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.css' />"
-					+ "</head>"
-					+ ""
-					+ "<body> <section>  <div class='container'>" 
-					+ "<h1 align='center'>" + pageTitle.text() + "</h1>"
-					+ "</div>"
-					+ "<div class='container'>"
-					+ pageContent.html()
-					+ "</div>"
-					+ "</body>");
-			
+
+			Document document = generatePage(pageTitle, pageContent);
+
 			op = new File(outputDir + resourceName + ".html");
-			FileUtils.writeStringToFile(op, document.outerHtml(), "utf-16");
+			FileUtils.writeStringToFile(op, document.outerHtml(), "utf-8");
 			logger.info("Generated new document with title : " + pageTitle.text());
 		} catch (IOException exception) {
 			logger.error("Exception occurred while writing " + pageTitle.text(), exception);
 		}
 
-		
 		return op;
+	}
+
+	private Document generatePage(Element pageTitle, Element pageContent) {
+		InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream("template.html");
+
+		Document page = null;
+
+		try {
+			page = Jsoup.parse(stream, "utf-8", "");
+
+			// Set the title of page
+			Element title = page.getElementsByTag("title").first();
+			title.text(pageTitle.text());
+
+			// Set the question statement
+			Element question = page.getElementById("ques");
+			question.text(pageTitle.text());
+
+			// Set the content
+
+			// 1. Get the content div
+			Element content = page.getElementById("content");
+
+			// 2. Get all the tags from downloaded page
+			Elements elements = pageContent.children();
+
+			// 3. for every tag
+			for (Element element : elements) {
+				if (element.tagName().equalsIgnoreCase("div")) {
+					continue;
+				} else if (element.tagName().equalsIgnoreCase("p")) {
+					Element paragraph = content.appendElement("p");
+					paragraph.attr("class", "text-justify");
+					paragraph.html(element.html());
+				} else if (element.tagName().equalsIgnoreCase("pre") && !containsImage(element)) {
+					Element div = content.appendElement("div");
+					div.attr("class", "bg-faded");
+					div.attr("style", "padding:20px;");
+
+					Element pre = div.appendElement("pre");
+					pre.html(element.html());
+				} else if (element.tagName().equalsIgnoreCase("a")) {
+					Element link = content.appendElement("a");
+					link.attr("href", element.attr("href"));
+					link.text(element.text());
+				}
+
+				else {
+					Element tag = content.appendElement(element.tagName());
+					tag.html(element.html());
+				}
+			}
+
+		} catch (IOException exception) {
+			logger.error("Exception occurred while generating .html page", exception);
+		}
+
+		return page;
+	}
+
+	private boolean containsImage(Element element) {
+		return (null != element.getElementsByTag("img") && !element.getElementsByTag("img").isEmpty());
 	}
 
 	private String fetchImage(String imageUrl, File dir) throws IOException {
@@ -104,20 +150,24 @@ public class HtmlDocumentGeneratorServiceImpl implements DocGeneratorService {
 		String name = imageUrl.substring(indexname, imageUrl.length());
 
 		// Open a URL Stream
-		URL url = new URL(imageUrl);
-		InputStream in = url.openStream();
 
-		File output = new File(dir.getAbsolutePath() + name);
-		output.createNewFile();
-		
-		OutputStream out = new BufferedOutputStream(new FileOutputStream(output));
+		try {
+			URL url = new URL(imageUrl);
+			InputStream in = url.openStream();
 
-		for (int b; (b = in.read()) != -1;) {
-			out.write(b);
+			File output = new File(dir.getAbsolutePath() + name);
+			output.createNewFile();
+
+			OutputStream out = new BufferedOutputStream(new FileOutputStream(output));
+
+			for (int b; (b = in.read()) != -1;) {
+				out.write(b);
+			}
+			out.close();
+			in.close();
+		} catch (Exception exception) {
+			logger.error("Exception occurred while downloading image file : ", exception);
 		}
-		out.close();
-		in.close();
-
 		return name;
 	}
 

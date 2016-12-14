@@ -6,6 +6,6 @@ import org.jsoup.nodes.Element;
 
 public interface DocGeneratorService {
 
-	File generateDocument(Element pageTitle, Element pageContent);
+	File generateDocument(Element... elements);
 
 }
