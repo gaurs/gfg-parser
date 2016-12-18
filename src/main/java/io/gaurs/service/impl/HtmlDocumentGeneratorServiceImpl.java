@@ -39,6 +39,9 @@ public class HtmlDocumentGeneratorServiceImpl implements DocGeneratorService {
 			// Replace All The Spaces
 			String resourceName = pageTitle.text().replaceAll(" ", "_");
 			resourceName = resourceName.replaceAll("/", "_");
+			
+			resourceName = resourceName.replaceAll("\\|", "_");
+			resourceName = resourceName.replaceAll("\\?", "");
 
 			// Download all the images in the pageContent Folder
 			Elements images = pageContent.getElementsByTag("img");
