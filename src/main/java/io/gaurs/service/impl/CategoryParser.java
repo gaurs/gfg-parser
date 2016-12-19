@@ -7,8 +7,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.annotation.PostConstruct;
-
 import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -28,12 +26,15 @@ public class CategoryParser implements ParsingService {
 	@Value("${start.path}")
 	private String repositoryPath;
 
+	@Value("${pages.to.download}")
+	private int pagesToDownload;
+
 	@Autowired
 	private PageParser pageParser;
 
 	@Autowired
 	private VisitedUrlService visitedUrlService;
-	
+
 	@Autowired
 	private IndexPageGeneratorServiceImpl indexPageGenerator;
 
@@ -63,6 +64,8 @@ public class CategoryParser implements ParsingService {
 		// links visited last time; won't be adding these this time to file/db
 		Set<String> existingUrlCache = visitedUrlService.getUrlList();
 		Set<String> newUrlCache = new HashSet<>();
+
+		int pageCount = 1;
 
 		try {
 
@@ -117,13 +120,13 @@ public class CategoryParser implements ParsingService {
 					break;
 				}
 
-			} while (!StringUtils.isEmpty(repositoryPath));
+			} while (!StringUtils.isEmpty(repositoryPath) && (++pageCount <= pagesToDownload));
 
 			// write the url cache to file/db; if existing urlcache is empty so
 			// we need not to PRE - append the urls data with newline character
 			// (1st line) else we do
 			visitedUrlService.saveUrlList(newUrlCache, !existingUrlCache.isEmpty());
-			
+
 			indexPageGenerator.generateDocument();
 
 		} catch (IOException exception) {

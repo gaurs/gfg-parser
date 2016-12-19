@@ -39,7 +39,7 @@ public class HtmlDocumentGeneratorServiceImpl implements DocGeneratorService {
 			// Replace All The Spaces
 			String resourceName = pageTitle.text().replaceAll(" ", "_");
 			resourceName = resourceName.replaceAll("/", "_");
-			
+
 			resourceName = resourceName.replaceAll("\\|", "_");
 			resourceName = resourceName.replaceAll("\\?", "");
 
@@ -104,29 +104,7 @@ public class HtmlDocumentGeneratorServiceImpl implements DocGeneratorService {
 
 			// 3. for every tag
 			for (Element element : elements) {
-				if (element.tagName().equalsIgnoreCase("div")) {
-					continue;
-				} else if (element.tagName().equalsIgnoreCase("p")) {
-					Element paragraph = content.appendElement("p");
-					paragraph.attr("class", "text-justify");
-					paragraph.html(element.html());
-				} else if (element.tagName().equalsIgnoreCase("pre") && !containsImage(element)) {
-					Element div = content.appendElement("div");
-					div.attr("class", "bg-faded");
-					div.attr("style", "padding:20px;");
-
-					Element pre = div.appendElement("pre");
-					pre.html(element.html());
-				} else if (element.tagName().equalsIgnoreCase("a")) {
-					Element link = content.appendElement("a");
-					link.attr("href", element.attr("href"));
-					link.text(element.text());
-				}
-
-				else {
-					Element tag = content.appendElement(element.tagName());
-					tag.html(element.html());
-				}
+				populateCurrentElement(element, content);
 			}
 
 		} catch (IOException exception) {
@@ -136,8 +114,54 @@ public class HtmlDocumentGeneratorServiceImpl implements DocGeneratorService {
 		return page;
 	}
 
-	private boolean containsImage(Element element) {
-		return (null != element.getElementsByTag("img") && !element.getElementsByTag("img").isEmpty());
+	private void populateCurrentElement(Element element, Element content) {
+
+		if (element.tagName().equalsIgnoreCase("div")) {
+			Elements childElements = element.children();
+			for (Element childElement : childElements) {
+				populateCurrentElement(childElement, content);
+			}
+
+		} else if (element.tagName().equalsIgnoreCase("p")) {
+			populatePTag(content, element);
+
+		} else if (element.tagName().equalsIgnoreCase("pre") && !containsChild(element, "img")) {
+			populatePreTag(content, element);
+		} else if (element.tagName().equalsIgnoreCase("a")) {
+			populateATag(content, element);
+		}
+
+		else {
+			Element tag = content.appendElement(element.tagName());
+			tag.html(element.html());
+		}
+
+	}
+
+	private void populateATag(Element content, Element element) {
+		Element link = content.appendElement("a");
+		link.attr("href", element.attr("href"));
+		link.text(element.text());
+	}
+
+	private void populatePTag(Element content, Element element) {
+		Element paragraph = content.appendElement("p");
+		paragraph.attr("class", "text-justify");
+		paragraph.html(element.html());
+	}
+
+	private void populatePreTag(Element content, Element element) {
+		Element div = content.appendElement("div");
+		div.attr("class", "bg-faded");
+		div.attr("style", "padding:20px;");
+
+		Element pre = div.appendElement("pre");
+		pre.html(element.html());
+
+	}
+
+	private boolean containsChild(Element element, String elementName) {
+		return (null != element.getElementsByTag("elementName") && !element.getElementsByTag("elementName").isEmpty());
 	}
 
 	private String fetchImage(String imageUrl, File dir) throws IOException {

@@ -28,9 +28,8 @@ public class SiteParserApplicationTests {
 	private CategoryParser categoryParser;
 
 	@Test
-	@Ignore
 	public void testPageParser() throws IOException {
-		Document doc = Jsoup.connect("http://www.geeksforgeeks.org/a-search-algorithm/").get();
+		Document doc = Jsoup.connect("http://www.geeksforgeeks.org/count-number-of-substrings-with-exactly-k-distinct-characters/").get();
 		List<File> allPagesInThisCategory = pagerParser.beginParsing(doc);
 		
 		assert(!allPagesInThisCategory.isEmpty());

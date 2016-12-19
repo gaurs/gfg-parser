@@ -65,7 +65,7 @@ public class IndexPageGeneratorServiceImpl implements DocGeneratorService {
 				Element row = tableRows.appendElement("tr");
 				row.appendElement("th").attr("scope", "row").text(String.valueOf(count++));
 				Element data = row.appendElement("td");
-				data.appendElement("a").attr("href", file.getPath()).text(file.getName().replaceAll("_", " ").replaceAll(".html", ""));
+				data.appendElement("a").attr("href", "file:///" + file.getPath()).text(file.getName().replaceAll("_", " ").replaceAll(".html", ""));
 			}
 
 		} catch (IOException exception) {
