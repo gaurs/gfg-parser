@@ -6,7 +6,7 @@ A spring-boot based stand alone application that generates minimal bootstrap pag
 --
 The installation process is fairly simple. This requires a working internet connection, java 1.8, maven and git. The instructions for the same are as follows :
 
-```sh
+```bash
 $ git clone https://github.com/gaurs/gfg-parser.git gfg
 $ cd gfg
 $ maven clean install
