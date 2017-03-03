@@ -1,6 +1,6 @@
 # Geeks for Geeks content parser
 
-A spring-boot based stand alone application that generates minimal bootstrap pages of geeksforgeeks pages. This is strictly for informational/educational purpose and not for any commercial benifits.
+A spring-boot based stand alone application that generates minimal bootstrap pages of geeksforgeeks pages. **This is strictly for informational/educational purpose and not for any other benifits**.
 
 ### How to Install
 --
